@@ -1,0 +1,65 @@
+// To implement an experiment using the ExperimentDef system, follow these steps:
+// Create a new class for your experiment's configuration request that inherits from ExperimentConfigRequest.
+public class MyExperimentConfigRequest : ExperimentConfigRequest
+{
+    // Add any additional properties specific to your experiment if needed.
+}
+
+// Create a new class for your experiment's configuration that inherits from ExperimentConfig
+public class MyExperimentConfig : ExperimentConfig
+{
+    // Add any properties specific to your experiment's configuration.
+    public string MyProperty { get; set; }
+}
+
+
+// Add your experiment to the ExperimentDefId enum.
+public enum ExperimentDefId
+{
+    // ...
+    MyExperiment,
+}
+// Implement your experiment configuration in the ExperimentDefList class.
+public static readonly ExperimentDef<MyExperimentConfigRequest, MyExperimentConfig> MyExperiment = new()
+{
+    ExperimentDefId = ExperimentDefId.MyExperiment,
+    GetConfig = request =>
+    {
+        // Implement your logic to generate the experiment configuration based on the request.
+        const int cohorts = 100;
+        const string cohortSalt = "my_experiment_salt";
+        var cohort = GetAccountCohort(request.AccountId, cohortSalt, cohorts);
+
+        var config = new MyExperimentConfig();
+        config.Name = "MyExperiment";
+
+        // Set configuration properties based on the cohort number.
+        if (cohort < 50)
+        {
+            config.MyProperty = "ValueA";
+        }
+        else
+        {
+            config.MyProperty = "ValueB";
+        }
+
+        return config;
+    }
+};
+
+//Create a MyExperimentConfigRequest object with the necessary properties:
+var request = new MyExperimentConfigRequest
+{
+    AccountId = Guid.NewGuid().ToString(),
+    ApplicationVersion = ApplicationVersion.Current,
+};
+
+//Get the experiment configuration by calling the GetConfig function:
+var config = ExperimentDefList.MyExperiment.GetConfig(request);
+
+//Finally, use the experiment configuration properties (config.MyProperty in this example) in your application to apply the desired experiment variations.
+
+//Client experiment configuration can be returned in profile/getState by adding properties to: 
+// Set configuration values based on the player's cohort number required by the client
+profile.ClientConfiguration = new ClientConfiguration();
+profile.ClientConfiguration.MyProperty = config.MyProperty;
